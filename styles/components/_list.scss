@@ -1,0 +1,28 @@
+@use '../abstracts/variables' as *;
+
+.list {
+  background-color: $color-list-bg;
+  width: $list-width;
+  border-radius: $radius-md;
+  padding: $spacing-sm;
+}
+
+.list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: $spacing-sm;
+}
+
+.list__cards {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.list__add-card {
+  margin-top: $spacing-sm;
+  color: $color-muted;
+  font-size: 14px;
+}
