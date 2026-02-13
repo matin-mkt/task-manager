@@ -116,28 +116,31 @@ function boardReducer(state: Board, action: BoardAction): Board {
       const sourceCards = [...sourceList.cards];
       const [movedCard] = sourceCards.splice(sourceIndex, 1);
 
+      if (!movedCard) return state;
+
       if (sourceListId === destinationListId) {
-        const reordered = reorder(sourceCards, sourceIndex, destinationIndex);
+        const reorderedCards = [...sourceList.cards];
+        const [removed] = reorderedCards.splice(sourceIndex, 1);
+        reorderedCards.splice(destinationIndex, 0, removed);
+
         return {
           ...state,
           lists: state.lists.map((l) =>
-            l.id === sourceListId ? { ...l, cards: reordered } : l,
+            l.id === sourceListId ? { ...l, cards: reorderedCards } : l,
           ),
         };
       }
 
+      // moving between lists
       const destinationCards = [...destinationList.cards];
       destinationCards.splice(destinationIndex, 0, movedCard);
 
       return {
         ...state,
         lists: state.lists.map((l) => {
-          if (l.id === sourceListId) {
-            return { ...l, cards: sourceCards };
-          }
-          if (l.id === destinationListId) {
+          if (l.id === sourceListId) return { ...l, cards: sourceCards };
+          if (l.id === destinationListId)
             return { ...l, cards: destinationCards };
-          }
           return l;
         }),
       };

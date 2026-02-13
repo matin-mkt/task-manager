@@ -3,7 +3,13 @@ import Card from "../card/Card";
 import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/hooks/useBoard";
 import { BoardAction } from "@/lib/hooks/useBoard";
-
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  verticalListSortingStrategy,
+  SortableContext,
+} from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core"; 
 interface ListProps {
   list: ListType;
   dispatch: React.Dispatch<BoardAction>;
@@ -11,7 +17,20 @@ interface ListProps {
 
 export default function List({ list, dispatch }: ListProps) {
   // const { dispatch } = useBoard();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: list.id, data: { type: "Container" } }); 
 
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
   const [isAdding, setIsAdding] = useState(false);
   const [cardTitle, setCardTitle] = useState("");
 
@@ -45,16 +64,23 @@ export default function List({ list, dispatch }: ListProps) {
   };
 
   return (
-    <div className="list">
-      <div className="list__header">
+    <div ref={setNodeRef} style={style} className="list">
+      <div className="list__header" {...attributes} {...listeners}>
         <span>{list.title}</span>
         <span>•••</span>
       </div>
 
       <div className="list__cards">
-        {list.cards.map((card) => (
-          <Card key={card.id} card={card} />
-        ))}
+        <SortableContext
+          items={list.cards.filter((c) => c && c.id).map((c) => c.id)} // filtering undeined and null cards
+          strategy={verticalListSortingStrategy}
+        >
+          {list.cards
+            .filter((c) => c && c.id)
+            .map((card) => (
+              <Card key={card.id} card={card} />
+            ))}
+        </SortableContext>
       </div>
 
       {!isAdding ? (
