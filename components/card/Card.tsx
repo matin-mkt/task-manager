@@ -1,16 +1,18 @@
+import { Card as CardType } from "@/utils/types/board.types";
+
 interface CardProps {
-  title: string;
+  card: CardType;
 }
 
-export default function Card({ title }: CardProps) {
+export default function Card({ card }: CardProps) {
   return (
     <div className="card">
-      <div className="card__title">{title}</div>
+      <div className="card__title">{card.title}</div>
 
       <div className="card__footer">
-        <button className="card__comments">
-          Comments (0)
-        </button>
+        <span className="card__comments">
+          Comments ({card.comments.length})
+        </span>
       </div>
     </div>
   );

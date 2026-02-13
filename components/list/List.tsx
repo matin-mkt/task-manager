@@ -1,20 +1,22 @@
-import Card from '../card/Card';
+import { List as ListType } from "@/utils/types/board.types";
+import Card from "../card/Card";
 
 interface ListProps {
-  title: string;
+  list: ListType;
 }
 
-export default function List({ title }: ListProps) {
+export default function List({ list }: ListProps) {
   return (
     <div className="list">
       <div className="list__header">
-        <span>{title}</span>
+        <span>{list.title}</span>
         <span>•••</span>
       </div>
 
       <div className="list__cards">
-        <Card title="Create interview Kanban" />
-        <Card title="Review Drag & Drop" />
+        {list.cards.map((card) => (
+          <Card key={card.id} card={card} />
+        ))}
       </div>
 
       <div className="list__add-card">
