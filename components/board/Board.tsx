@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/hooks/useBoard";
 import List from "../list/List";
+import Card from "../card/Card";
 import {
   DndContext,
   closestCorners,
@@ -11,136 +12,150 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { sortableKeyboardCoordinates, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { Card as CardType } from "@/utils/types/board.types";
 
 export default function Board() {
   const { state, dispatch } = useBoard();
+  const [mounted, setMounted] = useState(false);
+  
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeCard, setActiveCard] = useState<CardType | null>(null);
 
   const [isAdding, setIsAdding] = useState(false);
   const [listTitle, setListTitle] = useState("");
-
   const inputRef = useRef<HTMLInputElement>(null);
-const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // تا زمانی که کامپوننت در کلاینت کاملا لود نشده، چیزی رندر نکن
-  // Auto focus when input opens
   useEffect(() => {
-    if (isAdding) {
-      inputRef.current?.focus();
-    }
+    if (isAdding) inputRef.current?.focus();
   }, [isAdding]);
 
-  const handleAddList = () => {
-    if (!listTitle.trim()) return;
-
-    dispatch({
-      type: "ADD_LIST",
-      payload: { title: listTitle },
-    });
-
-    setListTitle("");
-    setIsAdding(false);
-  };
-
   const sensors = useSensors(
-  useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 8, 
-    },
-  })
-);
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
-
-
-const handleDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  if (!over) return;
-
-  const activeId = active.id;
-  const overId = over.id;
-
-  // helper function to find the card list
   const findContainer = (id: string) => {
-    if (state.lists.some(l => l.id === id)) return id; 
-    const list = state.lists.find(l => l.cards.some(c => c.id === id));
-    return list ? list.id : null;
+    if (state.lists.some((l) => l.id === id)) return id;
+    return state.lists.find((l) => l.cards.some((c) => c.id === id))?.id;
   };
 
-  const activeContainer = findContainer(activeId as string);
-  const overContainer = findContainer(overId as string);
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id.toString());
+    const card = state.lists.flatMap((l) => l.cards).find((c) => c.id === active.id);
+    if (card) setActiveCard(card);
+  };
 
-  if (!activeContainer || !overContainer) return;
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
 
-  // if we are moving the lists
-  if (activeId === activeContainer && overId === overContainer) {
-    const oldIndex = state.lists.findIndex(l => l.id === activeId);
-    const newIndex = state.lists.findIndex(l => l.id === overId);
-    if (oldIndex !== newIndex) {
-      dispatch({ type: "REORDER_LISTS", payload: { sourceIndex: oldIndex, destinationIndex: newIndex } });
-    }
-    return;
-  }
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
 
-  // moving the cards
-  const activeIndex = state.lists.find(l => l.id === activeContainer)?.cards.findIndex(c => c.id === activeId);
-  let overIndex = state.lists.find(l => l.id === overContainer)?.cards.findIndex(c => c.id === overId);
+    const activeContainer = findContainer(activeId);
+    const overContainer = findContainer(overId);
 
+    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
 
-  if (overIndex === -1 || overIndex === undefined) {
-    overIndex = state.lists.find(l => l.id === overContainer)?.cards.length || 0;
-  }
+    const activeIndex = state.lists.find((l) => l.id === activeContainer)?.cards.findIndex((c) => c.id === activeId);
+    const overIndex = state.lists.find((l) => l.id === overContainer)?.cards.findIndex((c) => c.id === overId);
+    
+    const destIndex = overIndex !== -1 ? overIndex : state.lists.find(l => l.id === overContainer)?.cards.length || 0;
 
-  if (activeIndex !== undefined) {
     dispatch({
       type: "MOVE_CARD",
       payload: {
         sourceListId: activeContainer,
         destinationListId: overContainer,
-        sourceIndex: activeIndex,
-        destinationIndex: overIndex,
+        sourceIndex: activeIndex ?? 0,
+        destinationIndex: destIndex ?? 0,
       },
     });
-  }
-};
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleAddList();
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setActiveCard(null);
+
+    if (!over) return;
+
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
+
+    // moving lists
+    if (state.lists.some(l => l.id === activeId)) {
+      const oldIndex = state.lists.findIndex((l) => l.id === activeId);
+      const newIndex = state.lists.findIndex((l) => l.id === overId);
+      if (oldIndex !== newIndex) {
+        dispatch({ type: "REORDER_LISTS", payload: { sourceIndex: oldIndex, destinationIndex: newIndex } });
+      }
+      return;
+    }
+
+    
+    const activeContainer = findContainer(activeId);
+    const overContainer = findContainer(overId);
+
+    if (activeContainer && overContainer) {
+      const activeIndex = state.lists.find(l => l.id === activeContainer)?.cards.findIndex(c => c.id === activeId);
+      const overIndex = state.lists.find(l => l.id === overContainer)?.cards.findIndex(c => c.id === overId);
+
+      if (activeIndex !== overIndex) {
+        dispatch({
+          type: "MOVE_CARD",
+          payload: {
+            sourceListId: activeContainer,
+            destinationListId: overContainer,
+            sourceIndex: activeIndex ?? 0,
+            destinationIndex: overIndex ?? 0,
+          },
+        });
+      }
     }
   };
-    if (!mounted) return null;
 
+  const handleAddList = () => {
+    if (!listTitle.trim()) return;
+    dispatch({ type: "ADD_LIST", payload: { title: listTitle } });
+    setListTitle("");
+    setIsAdding(false);
+  };
+
+  if (!mounted) return null;
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="board">
         <h1 className="board__title">{state.title}</h1>
-
         <div className="board__lists">
-          <SortableContext
-            items={state.lists.map((l) => l.id)}
-            strategy={horizontalListSortingStrategy}
-          >
+          <SortableContext items={state.lists.map(l => l.id)} strategy={horizontalListSortingStrategy}>
             {state.lists.map((list) => (
               <List key={list.id} list={list} dispatch={dispatch} />
             ))}
           </SortableContext>
+
+          
           <div className="list add-list">
             {!isAdding ? (
-              <button onClick={() => setIsAdding(true)}>
+              <button className="add-list-btn" onClick={() => setIsAdding(true)}>
                 + Add another list
               </button>
             ) : (
@@ -151,18 +166,25 @@ const handleDragEnd = (event: DragEndEvent) => {
                   placeholder="Enter list title..."
                   value={listTitle}
                   onChange={(e) => setListTitle(e.target.value)}
-                  onKeyDown={handleKeyDown}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddList()}
                 />
-
                 <div className="add-list__actions">
                   <button onClick={handleAddList}>Add List</button>
-                  <button onClick={() => setIsAdding(false)}>Cancel</button>
+                  <button onClick={() => setIsAdding(false)}>X</button>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      <DragOverlay dropAnimation={{
+        sideEffects: defaultDropAnimationSideEffects({
+          styles: { active: { opacity: "0.5" } },
+        }),
+      }}>
+        {activeCard ? <Card card={activeCard} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }
