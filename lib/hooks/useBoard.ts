@@ -176,17 +176,20 @@ function boardReducer(state: Board, action: BoardAction): Board {
 
 // custom hook
 export function useBoard() {
-  const [state, dispatch] = useReducer(
-    boardReducer,
-    initialBoard,
-    (initial) => {
-      if (typeof window === "undefined") return initial;
+  const [state, dispatch] = useReducer(boardReducer, initialBoard);
 
-      const stored = localStorage.getItem("board");
-      return stored ? JSON.parse(stored) : initial;
-    },
-  );
+  // Load from localStorage after mount
+  useEffect(() => {
+    const stored = localStorage.getItem("board");
+    if (stored) {
+      dispatch({
+        type: "SET_BOARD",
+        payload: JSON.parse(stored),
+      });
+    }
+  }, []);
 
+  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("board", JSON.stringify(state));
   }, [state]);
