@@ -17,15 +17,22 @@ import {
   DragStartEvent,
   defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  sortableKeyboardCoordinates,
+  SortableContext,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { Card as CardType } from "@/utils/types/board.types";
-import { rectIntersection, pointerWithin, getFirstCollision } from "@dnd-kit/core";
-
+import {
+  rectIntersection,
+  pointerWithin,
+  getFirstCollision,
+} from "@dnd-kit/core";
 
 export default function Board() {
   const { state, dispatch } = useBoard();
   const [mounted, setMounted] = useState(false);
-  
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
 
@@ -43,7 +50,9 @@ export default function Board() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const findContainer = (id: string) => {
@@ -54,53 +63,61 @@ export default function Board() {
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     setActiveId(active.id.toString());
-    const card = state.lists.flatMap((l) => l.cards).find((c) => c.id === active.id);
+    const card = state.lists
+      .flatMap((l) => l.cards)
+      .find((c) => c.id === active.id);
     if (card) setActiveCard(card);
   };
 
-const handleDragOver = (event: DragOverEvent) => {
-  const { active, over } = event;
-  if (!over) return;
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
 
-  const activeId = active.id.toString();
-  const overId = over.id.toString();
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
 
-  // --- ۱. منطق جابه‌جایی لیست‌ها (جدید) ---
-  // اگر آیتمی که درگ شده خودش یک لیست باشد
-  if (state.lists.some((l) => l.id === activeId)) {
-    const oldIndex = state.lists.findIndex((l) => l.id === activeId);
-    const newIndex = state.lists.findIndex((l) => l.id === overId);
+    
+    if (state.lists.some((l) => l.id === activeId)) {
+      const oldIndex = state.lists.findIndex((l) => l.id === activeId);
+      const newIndex = state.lists.findIndex((l) => l.id === overId);
 
-    if (oldIndex !== newIndex && oldIndex !== -1 && newIndex !== -1) {
-      dispatch({
-        type: "REORDER_LISTS",
-        payload: { sourceIndex: oldIndex, destinationIndex: newIndex },
-      });
+      if (oldIndex !== newIndex && oldIndex !== -1 && newIndex !== -1) {
+        dispatch({
+          type: "REORDER_LISTS",
+          payload: { sourceIndex: oldIndex, destinationIndex: newIndex },
+        });
+      }
+      return; 
     }
-    return; // اگر لیست بود، کار همینجا تمومه
-  }
 
-  // --- ۲. منطق جابه‌جایی کارت‌ها (همان قبلی) ---
-  const activeContainer = findContainer(activeId);
-  const overContainer = findContainer(overId);
+    const activeContainer = findContainer(activeId);
+    const overContainer = findContainer(overId);
 
-  if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+    if (!activeContainer || !overContainer || activeContainer === overContainer)
+      return;
 
-  const activeIndex = state.lists.find((l) => l.id === activeContainer)?.cards.findIndex((c) => c.id === activeId);
-  const overIndex = state.lists.find((l) => l.id === overContainer)?.cards.findIndex((c) => c.id === overId);
-  
-  const destIndex = overIndex !== -1 ? overIndex : state.lists.find(l => l.id === overContainer)?.cards.length || 0;
+    const activeIndex = state.lists
+      .find((l) => l.id === activeContainer)
+      ?.cards.findIndex((c) => c.id === activeId);
+    const overIndex = state.lists
+      .find((l) => l.id === overContainer)
+      ?.cards.findIndex((c) => c.id === overId);
 
-  dispatch({
-    type: "MOVE_CARD",
-    payload: {
-      sourceListId: activeContainer,
-      destinationListId: overContainer,
-      sourceIndex: activeIndex ?? 0,
-      destinationIndex: destIndex ?? 0,
-    },
-  });
-};
+    const destIndex =
+      overIndex !== -1
+        ? overIndex
+        : state.lists.find((l) => l.id === overContainer)?.cards.length || 0;
+
+    dispatch({
+      type: "MOVE_CARD",
+      payload: {
+        sourceListId: activeContainer,
+        destinationListId: overContainer,
+        sourceIndex: activeIndex ?? 0,
+        destinationIndex: destIndex ?? 0,
+      },
+    });
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -113,22 +130,28 @@ const handleDragOver = (event: DragOverEvent) => {
     const overId = over.id.toString();
 
     // moving lists
-    if (state.lists.some(l => l.id === activeId)) {
+    if (state.lists.some((l) => l.id === activeId)) {
       const oldIndex = state.lists.findIndex((l) => l.id === activeId);
       const newIndex = state.lists.findIndex((l) => l.id === overId);
       if (oldIndex !== newIndex) {
-        dispatch({ type: "REORDER_LISTS", payload: { sourceIndex: oldIndex, destinationIndex: newIndex } });
+        dispatch({
+          type: "REORDER_LISTS",
+          payload: { sourceIndex: oldIndex, destinationIndex: newIndex },
+        });
       }
       return;
     }
 
-    
     const activeContainer = findContainer(activeId);
     const overContainer = findContainer(overId);
 
     if (activeContainer && overContainer) {
-      const activeIndex = state.lists.find(l => l.id === activeContainer)?.cards.findIndex(c => c.id === activeId);
-      const overIndex = state.lists.find(l => l.id === overContainer)?.cards.findIndex(c => c.id === overId);
+      const activeIndex = state.lists
+        .find((l) => l.id === activeContainer)
+        ?.cards.findIndex((c) => c.id === activeId);
+      const overIndex = state.lists
+        .find((l) => l.id === overContainer)
+        ?.cards.findIndex((c) => c.id === overId);
 
       if (activeIndex !== overIndex) {
         dispatch({
@@ -152,17 +175,14 @@ const handleDragOver = (event: DragOverEvent) => {
   };
 
   const customCollisionStrategy = (args: any) => {
-  // اول چک کن ببین مستقیم روی کدوم آیتم هستیم
-  const pointerCollisions = pointerWithin(args);
-  if (pointerCollisions.length > 0) return pointerCollisions;
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) return pointerCollisions;
 
-  // اگر نبود، برخورد مستطیل‌ها رو چک کن
-  const rectCollisions = rectIntersection(args);
-  if (rectCollisions.length > 0) return rectCollisions;
+    const rectCollisions = rectIntersection(args);
+    if (rectCollisions.length > 0) return rectCollisions;
 
-  // در نهایت نزدیک‌ترین گوشه
-  return closestCorners(args);
-};
+    return closestCorners(args);
+  };
 
   if (!mounted) return null;
 
@@ -177,16 +197,21 @@ const handleDragOver = (event: DragOverEvent) => {
       <div className="board">
         <h1 className="board__title">{state.title}</h1>
         <div className="board__lists">
-          <SortableContext items={state.lists.map(l => l.id)} strategy={horizontalListSortingStrategy}>
+          <SortableContext
+            items={state.lists.map((l) => l.id)}
+            strategy={horizontalListSortingStrategy}
+          >
             {state.lists.map((list) => (
               <List key={list.id} list={list} dispatch={dispatch} />
             ))}
           </SortableContext>
 
-          
           <div className="list add-list">
             {!isAdding ? (
-              <button className="add-list-btn" onClick={() => setIsAdding(true)}>
+              <button
+                className="add-list-btn"
+                onClick={() => setIsAdding(true)}
+              >
                 + Add another list
               </button>
             ) : (
@@ -209,20 +234,25 @@ const handleDragOver = (event: DragOverEvent) => {
         </div>
       </div>
 
-     <DragOverlay>
-  {activeId ? (
-    // اگر آیدی درگ شده مربوط به یک لیست بود
-    state.lists.some(l => l.id === activeId) ? (
-      <List 
-        list={state.lists.find(l => l.id === activeId)!} 
-        dispatch={dispatch} 
-      />
-    ) : (
-      // اگر مربوط به یک کارت بود
-      activeCard ? <Card card={activeCard} /> : null
-    )
-  ) : null}
-</DragOverlay>
+      <DragOverlay>
+        {activeId ? (
+          state.lists.some((l) => l.id === activeId) ? (
+            <List
+              list={state.lists.find((l) => l.id === activeId)!}
+              dispatch={dispatch}
+            />
+          ) : activeCard ? (
+            <Card
+              card={activeCard}
+              dispatch={dispatch}
+              listId={
+                state.lists.find((l) => l.cards.some((c) => c.id === activeId))
+                  ?.id || ""
+              }
+            />
+          ) : null
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

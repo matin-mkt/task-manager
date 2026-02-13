@@ -77,7 +77,7 @@ const { setNodeRef, attributes, listeners, transform, transition, isDragging } =
           {list.cards
             .filter((c) => c && c.id)
             .map((card) => (
-              <Card key={card.id} card={card} />
+              <Card listId={list.id} dispatch={dispatch} key={card.id} card={card} />
             ))}
         </SortableContext>
       </div>
