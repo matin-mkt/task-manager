@@ -2,10 +2,11 @@ import { List as ListType } from "@/utils/types/board.types";
 import Card from "../card/Card";
 import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/hooks/useBoard";
+import { BoardAction } from "@/lib/hooks/useBoard";
 
 interface ListProps {
   list: ListType;
-  dispatch: React.Dispatch<any>;
+  dispatch: React.Dispatch<BoardAction>;
 }
 
 export default function List({ list, dispatch }: ListProps) {

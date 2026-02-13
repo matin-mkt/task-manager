@@ -5,7 +5,7 @@ import { reorder } from "@/utils/array.utils";
 
 // action types
 
-type BoardAction =
+export type BoardAction =
   | { type: "SET_BOARD"; payload: Board }
 
   // Board
