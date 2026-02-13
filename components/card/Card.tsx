@@ -7,6 +7,7 @@ import { BoardAction } from "@/lib/hooks/useBoard";
 import CommentModal from "../common/CommentModal"; // مسیر رو چک کن
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import EditableText from "../common/EditableText";
 
 interface CardProps {
   card: CardType;
@@ -18,8 +19,14 @@ export default function Card({ card, listId, dispatch }: CardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // منطق dnd-kit که قبلاً داشتیم
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = 
-    useSortable({ id: card.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card.id });
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -29,21 +36,30 @@ export default function Card({ card, listId, dispatch }: CardProps) {
 
   return (
     <>
-      <div 
-        ref={setNodeRef} 
-        style={style} 
+      <div
+        ref={setNodeRef}
+        style={style}
         className="card"
-        {...attributes} 
+        {...attributes}
         {...listeners}
       >
-        <div className="card__title">{card.title}</div>
+        <div className="card__title">
+          <EditableText
+            value={card.title}
+            onSave={(newTitle) =>
+              dispatch({
+                type: "EDIT_CARD_TITLE",
+                payload: { listId, cardId: card.id, title: newTitle },
+              })
+            }
+          />
+        </div>
 
         <div className="card__footer">
-          
-          <span 
-            className="card__comments" 
+          <span
+            className="card__comments"
             onClick={(e) => {
-              e.stopPropagation(); 
+              e.stopPropagation();
               setIsModalOpen(true);
             }}
           >
@@ -53,7 +69,7 @@ export default function Card({ card, listId, dispatch }: CardProps) {
       </div>
 
       {isModalOpen && (
-        <CommentModal 
+        <CommentModal
           card={card}
           listId={listId}
           dispatch={dispatch}

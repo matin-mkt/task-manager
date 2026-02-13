@@ -28,6 +28,7 @@ import {
   pointerWithin,
   getFirstCollision,
 } from "@dnd-kit/core";
+import EditableText from "../common/EditableText";
 
 export default function Board() {
   const { state, dispatch } = useBoard();
@@ -49,11 +50,13 @@ export default function Board() {
   }, [isAdding]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  }),
+  
+);
 
   const findContainer = (id: string) => {
     if (state.lists.some((l) => l.id === id)) return id;
@@ -76,7 +79,6 @@ export default function Board() {
     const activeId = active.id.toString();
     const overId = over.id.toString();
 
-    
     if (state.lists.some((l) => l.id === activeId)) {
       const oldIndex = state.lists.findIndex((l) => l.id === activeId);
       const newIndex = state.lists.findIndex((l) => l.id === overId);
@@ -87,7 +89,7 @@ export default function Board() {
           payload: { sourceIndex: oldIndex, destinationIndex: newIndex },
         });
       }
-      return; 
+      return;
     }
 
     const activeContainer = findContainer(activeId);
@@ -195,7 +197,14 @@ export default function Board() {
       onDragEnd={handleDragEnd}
     >
       <div className="board">
-        <h1 className="board__title">{state.title}</h1>
+        <h1 className="board__title">
+          <EditableText
+            value={state.title}
+            onSave={(newTitle) =>
+              dispatch({ type: "EDIT_BOARD_TITLE", payload: newTitle })
+            }
+          />
+        </h1>
         <div className="board__lists">
           <SortableContext
             items={state.lists.map((l) => l.id)}

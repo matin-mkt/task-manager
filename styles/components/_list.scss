@@ -13,6 +13,49 @@
   align-items: center;
   font-weight: 600;
   margin-bottom: $spacing-sm;
+  position: relative;
+
+  .list__menu-wrapper {
+    position: relative;
+    
+    .menu-trigger {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.08);
+      }
+    }
+
+    .list__dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 160px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 8px 16px -4px rgba(9, 30, 66, 0.25), 0 0 0 1px rgba(9, 30, 66, 0.08);
+      z-index: 100;
+      padding: 8px 0;
+      overflow: hidden;
+
+      .menu-item {
+        padding: 8px 12px;
+        font-size: 14px;
+        color: #172b4d;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover {
+          background-color: #f4f5f7;
+        }
+
+        &.delete {
+          color: #eb5a46; // رنگ قرمز برای حذف
+        }
+      }
+    }
+  }
 }
 
 .list__cards {

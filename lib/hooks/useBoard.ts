@@ -45,7 +45,8 @@ export type BoardAction =
   | {
       type: "DELETE_COMMENT";
       payload: { listId: string; cardId: string; commentId: string };
-    };
+    }
+  | { type: "CLEAR_LIST"; payload: { listId: string } };
 
 // reducer
 function boardReducer(state: Board, action: BoardAction): Board {
@@ -57,6 +58,22 @@ function boardReducer(state: Board, action: BoardAction): Board {
       return {
         ...state,
         title: action.payload,
+      };
+
+    case "DELETE_LIST":
+      return {
+        ...state,
+        lists: state.lists.filter((l) => l.id !== action.payload.listId),
+      };
+
+    case "EDIT_LIST_TITLE":
+      return {
+        ...state,
+        lists: state.lists.map((l) =>
+          l.id === action.payload.listId
+            ? { ...l, title: action.payload.title }
+            : l,
+        ),
       };
 
     case "ADD_LIST":
@@ -172,6 +189,15 @@ function boardReducer(state: Board, action: BoardAction): Board {
         ),
       };
 
+    case "CLEAR_LIST":
+      return {
+        ...state,
+        lists: state.lists.map((list) =>
+          list.id === action.payload.listId
+            ? { ...list, cards: [] } // کارت‌ها رو خالی کن
+            : list,
+        ),
+      };
     default:
       return state;
   }
