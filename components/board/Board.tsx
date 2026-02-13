@@ -43,7 +43,7 @@ export default function Board() {
 
       <div className="board__lists">
         {state.lists.map((list) => (
-          <List key={list.id} list={list} />
+          <List key={list.id} list={list} dispatch={dispatch} />
         ))}
 
         <div className="list add-list">
