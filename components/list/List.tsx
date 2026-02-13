@@ -17,14 +17,13 @@ interface ListProps {
 
 export default function List({ list, dispatch }: ListProps) {
   // const { dispatch } = useBoard();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: list.id, data: { type: "Container" } }); 
+const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
+  id: list.id,
+  data: {
+    type: 'container',
+    children: list.cards,
+  },
+});
 
   const style = {
     transform: CSS.Translate.toString(transform),

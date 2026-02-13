@@ -19,6 +19,8 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { Card as CardType } from "@/utils/types/board.types";
+import { rectIntersection, pointerWithin, getFirstCollision } from "@dnd-kit/core";
+
 
 export default function Board() {
   const { state, dispatch } = useBoard();
@@ -56,33 +58,49 @@ export default function Board() {
     if (card) setActiveCard(card);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
+const handleDragOver = (event: DragOverEvent) => {
+  const { active, over } = event;
+  if (!over) return;
 
-    const activeId = active.id.toString();
-    const overId = over.id.toString();
+  const activeId = active.id.toString();
+  const overId = over.id.toString();
 
-    const activeContainer = findContainer(activeId);
-    const overContainer = findContainer(overId);
+  // --- ۱. منطق جابه‌جایی لیست‌ها (جدید) ---
+  // اگر آیتمی که درگ شده خودش یک لیست باشد
+  if (state.lists.some((l) => l.id === activeId)) {
+    const oldIndex = state.lists.findIndex((l) => l.id === activeId);
+    const newIndex = state.lists.findIndex((l) => l.id === overId);
 
-    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+    if (oldIndex !== newIndex && oldIndex !== -1 && newIndex !== -1) {
+      dispatch({
+        type: "REORDER_LISTS",
+        payload: { sourceIndex: oldIndex, destinationIndex: newIndex },
+      });
+    }
+    return; // اگر لیست بود، کار همینجا تمومه
+  }
 
-    const activeIndex = state.lists.find((l) => l.id === activeContainer)?.cards.findIndex((c) => c.id === activeId);
-    const overIndex = state.lists.find((l) => l.id === overContainer)?.cards.findIndex((c) => c.id === overId);
-    
-    const destIndex = overIndex !== -1 ? overIndex : state.lists.find(l => l.id === overContainer)?.cards.length || 0;
+  // --- ۲. منطق جابه‌جایی کارت‌ها (همان قبلی) ---
+  const activeContainer = findContainer(activeId);
+  const overContainer = findContainer(overId);
 
-    dispatch({
-      type: "MOVE_CARD",
-      payload: {
-        sourceListId: activeContainer,
-        destinationListId: overContainer,
-        sourceIndex: activeIndex ?? 0,
-        destinationIndex: destIndex ?? 0,
-      },
-    });
-  };
+  if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+
+  const activeIndex = state.lists.find((l) => l.id === activeContainer)?.cards.findIndex((c) => c.id === activeId);
+  const overIndex = state.lists.find((l) => l.id === overContainer)?.cards.findIndex((c) => c.id === overId);
+  
+  const destIndex = overIndex !== -1 ? overIndex : state.lists.find(l => l.id === overContainer)?.cards.length || 0;
+
+  dispatch({
+    type: "MOVE_CARD",
+    payload: {
+      sourceListId: activeContainer,
+      destinationListId: overContainer,
+      sourceIndex: activeIndex ?? 0,
+      destinationIndex: destIndex ?? 0,
+    },
+  });
+};
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -133,12 +151,25 @@ export default function Board() {
     setIsAdding(false);
   };
 
+  const customCollisionStrategy = (args: any) => {
+  // اول چک کن ببین مستقیم روی کدوم آیتم هستیم
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length > 0) return pointerCollisions;
+
+  // اگر نبود، برخورد مستطیل‌ها رو چک کن
+  const rectCollisions = rectIntersection(args);
+  if (rectCollisions.length > 0) return rectCollisions;
+
+  // در نهایت نزدیک‌ترین گوشه
+  return closestCorners(args);
+};
+
   if (!mounted) return null;
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={customCollisionStrategy}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -178,13 +209,20 @@ export default function Board() {
         </div>
       </div>
 
-      <DragOverlay dropAnimation={{
-        sideEffects: defaultDropAnimationSideEffects({
-          styles: { active: { opacity: "0.5" } },
-        }),
-      }}>
-        {activeCard ? <Card card={activeCard} /> : null}
-      </DragOverlay>
+     <DragOverlay>
+  {activeId ? (
+    // اگر آیدی درگ شده مربوط به یک لیست بود
+    state.lists.some(l => l.id === activeId) ? (
+      <List 
+        list={state.lists.find(l => l.id === activeId)!} 
+        dispatch={dispatch} 
+      />
+    ) : (
+      // اگر مربوط به یک کارت بود
+      activeCard ? <Card card={activeCard} /> : null
+    )
+  ) : null}
+</DragOverlay>
     </DndContext>
   );
 }
