@@ -1,0 +1,18 @@
+@use '../abstracts/variables' as *;
+
+.board {
+  padding: $spacing-lg;
+}
+
+.board__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: $spacing-lg;
+}
+
+.board__lists {
+  display: flex;
+  gap: $spacing-lg;
+  align-items: flex-start;
+}

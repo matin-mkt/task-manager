@@ -1,0 +1,138 @@
+@use '../abstracts/variables' as *;
+
+.list {
+  background-color: $color-list-bg;
+  width: $list-width;
+  border-radius: $radius-md;
+  padding: $spacing-sm;
+}
+
+.list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: $spacing-sm;
+  position: relative;
+
+  .list__menu-wrapper {
+    position: relative;
+    
+    .menu-trigger {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.08);
+      }
+    }
+
+    .list__dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 160px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 8px 16px -4px rgba(9, 30, 66, 0.25), 0 0 0 1px rgba(9, 30, 66, 0.08);
+      z-index: 100;
+      padding: 8px 0;
+      overflow: hidden;
+
+      .menu-item {
+        padding: 8px 12px;
+        font-size: 14px;
+        color: #172b4d;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover {
+          background-color: #f4f5f7;
+        }
+
+        &.delete {
+          color: #eb5a46; // رنگ قرمز برای حذف
+        }
+      }
+    }
+  }
+}
+
+.list__cards {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.list__add-card {
+  margin-top: $spacing-sm;
+  color: $color-muted;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+
+.add-list {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px;
+  border-radius: 6px;
+  width: 280px;
+
+  button {
+    color: white;
+    font-weight: 500;
+    width: 100%;
+    text-align: left;
+  }
+}
+
+.add-list__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  input {
+    padding: 6px;
+    border-radius: 4px;
+    border: none;
+  }
+}
+
+.add-list__actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    background: white;
+    color: #172b4d;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+}
+
+
+.add-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+
+  input {
+    padding: 6px;
+    border-radius: 4px;
+    border: none;
+  }
+}
+
+.add-card__actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    background: white;
+    color: #172b4d;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+}

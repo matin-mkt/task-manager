@@ -1,0 +1,6 @@
+@use '../abstracts/variables' as *;
+
+body {
+  background-color: $color-board-bg;
+  color: $color-text-dark;
+}
